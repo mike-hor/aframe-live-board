@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<script src="https://rawgit.com/aframevr/aframe/84f181a/dist/aframe-master.min.js" type="text/javascript" charset="utf-8"></script>
+
+	<body>
+		<script type="text/javascript">
+			AFRAME.registerComponent('live-board', {
+				schema: {
+					target: {
+						type: 'selector'
+					}
+				},
+				init: function() {
+					this.camera = this.data.target.object3D.children[0]
+					var scene = document.querySelector('a-scene');
+					var sceneEl = this.el.sceneEl;
+					this.scene = this.el.sceneEl.object3D;
+					this.renderReady = false;
+					if(this.el.sceneEl.renderstart) {
+						setup();
+					} else {
+						sceneEl.addEventListener('render-target-loaded', setup);
+					}
+					var self = this;
+
+					function setup() {
+						self.target = new THREE.WebGLRenderTarget(scene.canvas.width, scene.canvas.height);
+						self.render = sceneEl.renderer
+						self.render.setRenderTarget(self.target);
+						self.board = self.el.object3D.children[0];
+						self.board.material.map = self.target.texture;
+						self.board.material.map.needUpdate = true;
+						self.render.clear();
+						self.render.render(self.scene, self.camera, self.target);
+						self.renderReady = true;
+					}
+				},
+				tick: function() {
+					if(this.renderReady) {
+						this.render.render(this.scene, this.camera, this.target);
+					}
+				}
+			})
+		</script>
+		<a-scene antialias="true">
+			<a-assets>
+				<img id="sky" src="img/sky.png">
+			</a-assets>
+			<a-camera id="camera" active></a-camera>
+			<a-sky src="#sky"></a-sky>
+			<a-box></a-box>
+			<a-entity live-board="target:#camera" id="board" material="shader:flat" position="0 3.769 -5.967" rotation="360 0 0" geometry="primitive:plane;height:5;width:5"></a-entity>
+		</a-scene>
+	</body>
+
+</html>
